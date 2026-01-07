@@ -6,6 +6,7 @@
 #define TEST_COUNT 100000 // 测试次数
 #define TEST_ANGLE 0x4000  // 测试角度（示例值，Q16格式）
 
+void test_butter_result(void);
 void test_speed(void);
 
 char order = 3;
@@ -18,8 +19,17 @@ int main()
     // printf("%d\n",test());
 
     // 根据阶数和截止频率计算巴特沃斯滤波器系数b和a
+    test_butter_result();
+
+    // 性能测试
+    test_speed();
+
+    return 0;
+}
+
+void test_butter_result(void)
+{
     butter(order, bw, b, a);
-    // printf("%d\n",test());
     printf("计算得到的b系数: [");
     for (int i = 0; i <= order; i++)
     {
@@ -30,15 +40,6 @@ int main()
     {
         printf("%d%s", a[i], (i < order) ? ", " : "]\n");
     }
-
-    // 性能测试
-    test_speed();
-    // 导入频率响应数据csv
-
-    // 计算频率响应
-
-    // 将原结果和计算结果输出到新csv
-    return 0;
 }
 
 void test_speed(void)
