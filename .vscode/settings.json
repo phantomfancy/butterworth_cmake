@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "*.json": "jsonc",
+        "butterworth_cmake.h": "c",
+        "butterworth.h": "c",
+        "stdio.h": "c",
+        "cstdlib": "c"
+    },
+    "makefile.makefilePath": ""
+}
