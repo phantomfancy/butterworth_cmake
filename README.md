@@ -1,4 +1,6 @@
-# Embedded Butterworth Filter
+# butterworth_cmake
+
+An embedded butterworth filter with zero-floating-point implementation.
 
 ## Introduction
 
