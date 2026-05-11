@@ -1,5 +1,13 @@
 # butterworth_cmake
 
+[![GitHub stars](https://img.shields.io/github/stars/phantomfancy/butterworth_cmake?style=flat-square)](https://github.com/phantomfancy/butterworth_cmake/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/phantomfancy/butterworth_cmake?style=flat-square)](https://github.com/phantomfancy/butterworth_cmake/network/members)
+[![Top language](https://img.shields.io/github/languages/top/phantomfancy/butterworth_cmake?style=flat-square)](https://github.com/phantomfancy/butterworth_cmake)
+[![CMake](https://img.shields.io/badge/CMake-3.10%2B-064F8C?style=flat-square&logo=cmake)](https://cmake.org/)
+[![License](https://img.shields.io/github/license/phantomfancy/butterworth_cmake?style=flat-square)](LICENSE)
+
+一个 零浮点运算的嵌入式巴特沃斯滤波器实现。
+
 An embedded butterworth filter with zero-floating-point implementation.
 
 ## Introduction
