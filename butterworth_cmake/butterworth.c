@@ -30,12 +30,22 @@
 #define SQRT2_Q16_16 0x00016ADA            // √2 ≈ 1.41421
 #define FIX_WN_THRESHOLD_Q16_16 0x00006666
 #define MIN_VAL 0x00000001
+#define CORDIC_ITERATIONS 16
+#define CORDIC_GAIN_INV_Q16_16 0x00009B75  // 0.60725294
 
 
 #define GET_Q16_16_INT(x) ((short)(x >> 16))
 #define GET_Q16_16_DEC(x) ((unsigned short)(x & Q16_16_D_MAX))
 #define OPP_Q16_16(x) (-(x))
 #define ABS_Q16_16(x) (((x) < 0) ? (-(x)) : (x))
+
+static const q16_16_t cordic_atan_table_q16_16[CORDIC_ITERATIONS] = {
+    0x0000C910, 0x000076B2, 0x00003EB7, 0x00001FD6,
+    0x00000FFB, 0x000007FF, 0x00000400, 0x00000200,
+    0x00000100, 0x00000080, 0x00000040, 0x00000020,
+    0x00000010, 0x00000008, 0x00000004, 0x00000002
+};
+
 static inline q16_16_t MUL_Q16_16(q16_16_t a, q16_16_t b)
 {
     if (a == 0x00010000) return b;
@@ -53,7 +63,7 @@ static inline q16_16_t DIV_Q16_16(q16_16_t a, q16_16_t b)
 
 // int invoke_count = 0;
 
-q16_16_t fix_tan_pi2_q16(q16_16_t Wn_q16)
+static q16_16_t fix_tan_pi2_q16_taylor(q16_16_t Wn_q16)
 {
     // invoke_count++;
     if (Wn_q16 < 0x00002000) {  // Wn < 0.1,tanx ≈ x
@@ -67,12 +77,74 @@ q16_16_t fix_tan_pi2_q16(q16_16_t Wn_q16)
     }
     else // 否则递归计算tan(x/2) = 2tan(x/2)/(1-tan^2(x/2))
     {
-        q16_16_t saturate_half_tan_pi2 = fix_tan_pi2_q16(MUL_Q16_16(HALF_Q16_16, Wn_q16));
+        q16_16_t saturate_half_tan_pi2 = fix_tan_pi2_q16_taylor(MUL_Q16_16(HALF_Q16_16, Wn_q16));
         return DIV_Q16_16(MUL_Q16_16(TWO_Q16_16, saturate_half_tan_pi2), (ONE_Q16_16 - MUL_Q16_16(saturate_half_tan_pi2, saturate_half_tan_pi2)));
     }
 }
 
+static q16_16_t fix_tan_pi2_q16_cordic(q16_16_t Wn_q16)
+{
+    q16_16_t theta = MUL_Q16_16(PI_HALF_Q16_16, Wn_q16);
+    q16_16_t x = CORDIC_GAIN_INV_Q16_16;
+    q16_16_t y = ZERO_Q16_16;
+    q16_16_t z = theta;
+
+    for (int i = 0; i < CORDIC_ITERATIONS; ++i)
+    {
+        q16_16_t x_shift = x >> i;
+        q16_16_t y_shift = y >> i;
+
+        if (z >= ZERO_Q16_16)
+        {
+            x -= y_shift;
+            y += x_shift;
+            z -= cordic_atan_table_q16_16[i];
+        }
+        else
+        {
+            x += y_shift;
+            y -= x_shift;
+            z += cordic_atan_table_q16_16[i];
+        }
+    }
+
+    if (ABS_Q16_16(x) <= MIN_VAL)
+    {
+        return (y >= ZERO_Q16_16) ? Q16_16_MAX : -Q16_16_MAX;
+    }
+
+    long long tan_q16 = ((long long)y << 16) / x;
+    if (tan_q16 > Q16_16_MAX)
+    {
+        return Q16_16_MAX;
+    }
+    if (tan_q16 < -Q16_16_MAX)
+    {
+        return -Q16_16_MAX;
+    }
+    return (q16_16_t)tan_q16;
+}
+
+q16_16_t fix_tan_pi2_q16(q16_16_t Wn_q16)
+{
+    return fix_tan_pi2_q16_taylor(Wn_q16);
+}
+
+static q16_16_t fix_tan_pi2_q16_by_method(q16_16_t Wn_q16, butter_tan_method_t tan_method)
+{
+    if (tan_method == BUTTER_TAN_METHOD_CORDIC)
+    {
+        return fix_tan_pi2_q16_cordic(Wn_q16);
+    }
+    return fix_tan_pi2_q16_taylor(Wn_q16);
+}
+
 char butter(unsigned char order, short bw, int* b, int* a)
+{
+    return butter_with_tan_method(order, bw, b, a, BUTTER_TAN_METHOD_TAYLOR);
+}
+
+char butter_with_tan_method(unsigned char order, short bw, int* b, int* a, butter_tan_method_t tan_method)
 {
     // 输入参数检查
     if ((order < 2) || (order > BW_MAX_ORDER) || (b == NULL) || (a == NULL) || (bw <= 0) || (bw > LOOP_FREQ_HZ / 2))
@@ -81,7 +153,7 @@ char butter(unsigned char order, short bw, int* b, int* a)
     }
 
     // 步骤1: 计算预畸变截止频率 wc = 2 * tan(pi/2 * Wn),以及其他参数
-    q16_16_t wc = MUL_Q16_16(TWO_Q16_16, fix_tan_pi2_q16((q16_16_t)((((long long)bw * 2 * 0x10000LL) / LOOP_FREQ_HZ))));
+    q16_16_t wc = MUL_Q16_16(TWO_Q16_16, fix_tan_pi2_q16_by_method((q16_16_t)((((long long)bw * 2 * 0x10000LL) / LOOP_FREQ_HZ)), tan_method));
     q16_16_t proto[BW_MAX_ORDER + 1] = { 0 }; // butterworth prototype
     q16_16_t K = TWO_Q16_16;
     q16_16_t K2 = MUL_Q16_16(K, K);
