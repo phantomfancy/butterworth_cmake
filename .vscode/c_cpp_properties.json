@@ -14,7 +14,8 @@
             "windowsSdkVersion": "10.0.26100.0",
             "cStandard": "c23",
             "cppStandard": "gnu++17",
-            "intelliSenseMode": "windows-gcc-x64"
+            "intelliSenseMode": "windows-gcc-x64",
+            "compilerPath": "clang.exe"
         }
     ],
     "version": 4

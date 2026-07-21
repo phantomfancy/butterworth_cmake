@@ -112,7 +112,7 @@ static q16_16_t fix_tan_pi2_q16_cordic(q16_16_t Wn_q16)
     {
         return (y >= ZERO_Q16_16) ? Q16_16_MAX : -Q16_16_MAX;
     }
-
+    
     long long tan_q16 = ((long long)y << 16) / x;
     if (tan_q16 > Q16_16_MAX)
     {

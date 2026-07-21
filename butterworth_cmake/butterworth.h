@@ -35,21 +35,21 @@ q16_16_t fix_tan_pi2_q16(q16_16_t Wn_q16);
 
 /**
  * \brief  设计Butterworth数字滤波器
- * @param  order: 滤波器阶数 (1~BW_MAX_ORDER)
- * @param  bw: 截止频率(0 ~ LOOP_FREQ_HZ/2 Hz)
- * @param  b: 输出分子系数数组
- * @param  a: 输出分母系数数组
- * \retval 成功返回0，失败返回错误码
+ * @param  order 滤波器阶数 (1~BW_MAX_ORDER)
+ * @param  bw 截止频率(0 ~ LOOP_FREQ_HZ/2 Hz)
+ * @param  b 输出分子系数数组
+ * @param  a 输出分母系数数组
+ * \retval char 成功返回0，失败返回错误码
  */
 char butter(unsigned char order, short bw, int* b, int* a);
 
 /**
  * \brief  设计Butterworth数字滤波器，并指定正切计算方法
- * @param  order: 滤波器阶数 (1~BW_MAX_ORDER)
- * @param  bw: 截止频率(0 ~ LOOP_FREQ_HZ/2 Hz)
- * @param  b: 输出分子系数数组
- * @param  a: 输出分母系数数组
- * @param  tan_method: 正切计算方法
- * \retval 成功返回0，失败返回错误码
+ * @param  order 滤波器阶数 (1~BW_MAX_ORDER)
+ * @param  bw 截止频率(0 ~ LOOP_FREQ_HZ/2 Hz)
+ * @param  b 输出分子系数数组
+ * @param  a 输出分母系数数组
+ * @param  tan_method 正切计算方法
+ * \retval char 成功返回0，失败返回错误码
  */
 char butter_with_tan_method(unsigned char order, short bw, int* b, int* a, butter_tan_method_t tan_method);
